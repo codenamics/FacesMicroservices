@@ -25,7 +25,7 @@ namespace OrdersApi.Persistence
 
         public async Task<Order> GetOrderAsync(Guid id)
         {
-            return await _context.Orders.Include(o => o.OrderDetail).FirstOrDefaultAsync(c => c.OrderId == id);
+            return await _context.Orders.Include(o => o.OrderDetail).SingleOrDefaultAsync(c => c.OrderId == id);
         }
 
         public async Task<IEnumerable<Order>> GetOrdersAsync()
