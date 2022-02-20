@@ -9,9 +9,9 @@ namespace OrdersApi.Persistence
 {
     public class OrderRepository : IOrderRepository
     {
-        private OrderContext _context;
+        private OrdersContext _context;
 
-        public OrderRepository(OrderContext context)
+        public OrderRepository(OrdersContext context)
         {
             _context = context;
         }
@@ -25,7 +25,9 @@ namespace OrdersApi.Persistence
 
         public async Task<Order> GetOrderAsync(Guid id)
         {
-            return await _context.Orders.Include(o => o.OrderDetail).SingleOrDefaultAsync(c => c.OrderId == id);
+            return await _context.Orders.
+                Include("OrderDetails").
+                FirstOrDefaultAsync(c => c.OrderId == id);
         }
 
         public async Task<IEnumerable<Order>> GetOrdersAsync()

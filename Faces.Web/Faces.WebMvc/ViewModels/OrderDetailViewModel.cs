@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OrdersApi.Models
+namespace FaceWebMvc.ViewModels
 {
-    public class OrderDetail
+    public class OrderDetailViewModel
     {
-        public Guid OrderId { get; set; }
         public int OrderDetailId { get; set; }
         public byte[] FaceData { get; set; }
+        public string ImageString { get; set; }
+
     }
 }

@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace OrdersApi.Models
+namespace Messaging.InterfacesConstants.Events
 {
-    public enum Status
+   public interface ICustomerNotifiedEvent
     {
-        Registered,
-        Processed,
-        Sent
     }
 }

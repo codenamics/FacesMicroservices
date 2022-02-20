@@ -1,55 +1,54 @@
 ﻿using MassTransit;
+using MassTransit.ConsumeConfigurators;
 using Messaging.InterfacesConstants.Commands;
 using Newtonsoft.Json;
 using OrdersApi.Models;
 using OrdersApi.Persistence;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace OrdersApi.Messages
+namespace OrdersApi.Messages.Consumers
 {
     public class RegisterOrderCommandConsumer : IConsumer<IRegisterOrderCommand>
     {
 
-
         private readonly IOrderRepository _orderRepo;
         private readonly IHttpClientFactory _clientFactory;
-
-        public RegisterOrderCommandConsumer(IOrderRepository orderRepo, IHttpClientFactory clientFactory)
+        
+        public RegisterOrderCommandConsumer(IOrderRepository orderRepo, IHttpClientFactory clientFactory )
         {
             _orderRepo = orderRepo;
             _clientFactory = clientFactory;
-
+           
         }
 
-        public  async Task Consume(ConsumeContext<IRegisterOrderCommand> context)
+        public async  Task Consume(ConsumeContext<IRegisterOrderCommand> context)
         {
             var result = context.Message;
-            if (result.OrderId != null
-                && result.UserEmail != null && result.ImageData != null)
+            if(result.OrderId != null &&result.PictureUrl != null 
+                && result.UserEmail != null &&result.ImageData!= null)
             {
                 SaveOrder(result);
 
-               var client = _clientFactory.CreateClient();
-                Tuple<List<byte[]>, Guid> orderDetailData = await GetFacesFromFaceApiAsync(client, result.ImageData, result.OrderId);
+                var client = _clientFactory.CreateClient();
+               Tuple<List<byte[]>, Guid> orderDetailData = await GetFacesFromFaceApiAsync(client, result.ImageData, result.OrderId);
                 List<byte[]> faces = orderDetailData.Item1;
-                Guid OrderId = orderDetailData.Item2;
-                SaveOrderDetails(OrderId, faces);
-
+                Guid orderId = orderDetailData.Item2;
+                SaveOrderDetails(orderId, faces);
             }
             
-
         }
 
-        private async Task<Tuple<List<byte[]>, Guid>> GetFacesFromFaceApiAsync(HttpClient client, byte[] imageData, Guid orderId)
+        private  async Task<Tuple<List<byte[]>, Guid>> GetFacesFromFaceApiAsync(HttpClient client, byte[] imageData, Guid orderId)
         {
             var byteContent = new ByteArrayContent(imageData);
             Tuple<List<byte[]>, Guid> orderDetailData = null;
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            using (var response = await client.PostAsync("http://localhost:6000/api/faces?orderId=" + orderId, byteContent))
+            using(var response = await client.PostAsync("http://localhost:6001/api/faces?orderId="+orderId, byteContent))
             {
                 string apiResponse = await response.Content.ReadAsStringAsync();
                 orderDetailData = JsonConvert.DeserializeObject<Tuple<List<byte[]>, Guid>>(apiResponse);
@@ -61,17 +60,17 @@ namespace OrdersApi.Messages
         private void SaveOrderDetails(Guid orderId, List<byte[]> faces)
         {
             var order = _orderRepo.GetOrderAsync(orderId).Result;
-            if (order != null)
+            if(order != null)
             {
                 order.Status = Status.Processed;
-                foreach (var face in faces)
+                foreach(var face in faces)
                 {
                     var orderDetail = new OrderDetail
                     {
-                        OrderId = orderId,
+                        OrderId =orderId,
                         FaceData = face
                     };
-                    order.OrderDetail.Add(orderDetail);
+                    order.OrderDetails.Add(orderDetail);
 
                 }
                 _orderRepo.UpdateOrder(order);

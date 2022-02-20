@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OrdersApi.Persistence;
-using System;
-using System.Threading.Tasks;
 
 namespace OrdersApi.Controllers
 {
@@ -10,18 +12,20 @@ namespace OrdersApi.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly IOrderRepository _orderRepository;
 
+        private readonly IOrderRepository _orderRepository;
         public OrdersController(IOrderRepository orderRepository)
         {
             _orderRepository = orderRepository;
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
-            var data = _orderRepository.GetOrdersAsync();
-            return Ok(data);    
+            var data = await _orderRepository.GetOrdersAsync();
+            return Ok(data);
         }
+
         [HttpGet]
         [Route("{orderId}", Name="GetByOrderId")]
         public async Task<IActionResult> GetOrderById(string orderId)
@@ -31,7 +35,7 @@ namespace OrdersApi.Controllers
             {
                 return NotFound();
             }
-            return Ok(order);   
+            return Ok(order);
         }
     }
 }

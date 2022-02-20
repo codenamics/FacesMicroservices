@@ -1,16 +1,17 @@
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using FaceWebMvc.RestClients;
+using FaceWebMvc.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Faces.WebMvc
+namespace FaceWebMvc
 {
     public class Startup
     {
@@ -24,20 +25,19 @@ namespace Faces.WebMvc
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddMassTransit();
-            services.AddMassTransit(x =>
-            {
-                x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
+            services.AddSingleton(provider => Bus.Factory.CreateUsingRabbitMq(
+                cfg =>
                 {
-           
-                    cfg.Host(new Uri("rabbitmq://localhost"), h =>
-                    {
-                        h.Username("guest");
-                        h.Password("guest");
-                    });
+                 
+                    services.AddSingleton<IBus>(provider => provider.GetRequiredService<IBusControl>());
+                    services.AddSingleton<IHostedService, BusService>();
+
                 }));
-            });
-            services.AddMassTransitHostedService();
+
+            services.AddHttpClient<IOrderManagementApi, OrderManagementApi>();
+
             services.AddControllersWithViews();
         }
 

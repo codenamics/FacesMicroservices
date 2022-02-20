@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using GreenPipes;
 using MassTransit;
 using Messaging.InterfacesConstants.Constants;
@@ -9,14 +13,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
-using OrdersApi.Messages;
+using OrdersApi.Messages.Consumers;
 using OrdersApi.Persistence;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using OrdersApi.Services;
 
 namespace OrdersApi
 {
@@ -32,39 +31,50 @@ namespace OrdersApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<OrderContext>(options => options.UseSqlServer(
+            services.AddDbContext<OrdersContext>(options => options.UseSqlServer
+            (
+                Configuration.GetConnectionString("OrdersContextConnection")
+            ));
 
-                Configuration.GetConnectionString("OrderContextConnection"),
-                options => options.EnableRetryOnFailure()
-                )) ;
-           
-            services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddHttpClient();
-            services.AddMassTransit(x =>
-            {
-                x.AddConsumer<RegisterOrderCommandConsumer>();
-                x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
+
+
+            services.AddTransient<IOrderRepository, OrderRepository>();
+
+            services.AddMassTransit(
+                c =>
                 {
-             
-                    cfg.Host(new Uri("rabbitmq://localhost"), h =>
-                    {
-                        h.Username("guest");
-                        h.Password("guest");
-                    });
-                    cfg.ReceiveEndpoint(RabbitMqMassTransitConstants.RegisterOrderCommandQueue, ep =>
-                    {
-                        ep.PrefetchCount = 16;
-                        ep.UseMessageRetry(r => r.Interval(2, 100));
-                        ep.ConfigureConsumer<RegisterOrderCommandConsumer>(provider);
-                    });
-                }));
-            });
-            services.AddMassTransitHostedService();
-            services.AddControllers();
-            services.AddSwaggerGen(c =>
+                    c.AddConsumer<RegisterOrderCommandConsumer>();
+                });
+
+
+            services.AddSingleton(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "OrdersApi", Version = "v1" });
+                var host = cfg.Host("localhost", "/", h => { });
+                cfg.ReceiveEndpoint(RabbitMqMassTransitConstants.RegisterOrderCommandQueue, e =>
+                {
+                    e.PrefetchCount = 16;
+                    e.UseMessageRetry(x => x.Interval(2, TimeSpan.FromSeconds(10)));
+                    e.Consumer<RegisterOrderCommandConsumer>(provider);
+
+                });
+
+
+                cfg.ConfigureEndpoints(provider);
+            }));
+            services.AddSingleton<IHostedService, BusService>();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder
+                       .AllowAnyMethod()
+                       .AllowAnyHeader()
+                       .SetIsOriginAllowed((host) => true)
+                       .AllowCredentials());
+
+
             });
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,10 +83,8 @@ namespace OrdersApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "OrdersApi v1"));
             }
-
+            app.UseCors("CorsPolicy");
             app.UseRouting();
 
             app.UseAuthorization();
@@ -88,3 +96,4 @@ namespace OrdersApi
         }
     }
 }
+ 
