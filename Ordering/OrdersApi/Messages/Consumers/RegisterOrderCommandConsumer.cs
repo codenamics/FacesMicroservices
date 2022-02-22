@@ -1,7 +1,10 @@
 ﻿using MassTransit;
 using MassTransit.ConsumeConfigurators;
 using Messaging.InterfacesConstants.Commands;
+using Messaging.InterfacesConstants.Events;
+using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
+using OrdersApi.Hubs;
 using OrdersApi.Models;
 using OrdersApi.Persistence;
 using System;
@@ -18,27 +21,39 @@ namespace OrdersApi.Messages.Consumers
 
         private readonly IOrderRepository _orderRepo;
         private readonly IHttpClientFactory _clientFactory;
-        
-        public RegisterOrderCommandConsumer(IOrderRepository orderRepo, IHttpClientFactory clientFactory )
+        private readonly IHubContext<OrderHub> _hubContext;
+        public RegisterOrderCommandConsumer(IOrderRepository orderRepo, IHttpClientFactory clientFactory, IHubContext<OrderHub> hubContext)
         {
             _orderRepo = orderRepo;
             _clientFactory = clientFactory;
-           
+            _hubContext = hubContext;
+
         }
 
         public async  Task Consume(ConsumeContext<IRegisterOrderCommand> context)
         {
             var result = context.Message;
-            if(result.OrderId != null &&result.PictureUrl != null 
+            if(result?.OrderId != null &&result.PictureUrl != null 
                 && result.UserEmail != null &&result.ImageData!= null)
             {
                 SaveOrder(result);
-
+                await _hubContext.Clients.All.SendAsync("UpdateOrders", "Order Created", result.OrderId);
                 var client = _clientFactory.CreateClient();
                Tuple<List<byte[]>, Guid> orderDetailData = await GetFacesFromFaceApiAsync(client, result.ImageData, result.OrderId);
                 List<byte[]> faces = orderDetailData.Item1;
                 Guid orderId = orderDetailData.Item2;
                 SaveOrderDetails(orderId, faces);
+                await _hubContext.Clients.All.SendAsync("UpdateOrders", "Order Processed", orderId);
+                await context.Publish<IOrderProcessedEvent>(new
+                {
+                    OrderId = orderId,
+                    result.UserEmail,
+                    Faces = faces,
+                    result.PictureUrl
+                });
+
+
+
             }
             
         }

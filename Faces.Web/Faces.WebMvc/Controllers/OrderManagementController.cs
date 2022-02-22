@@ -2,52 +2,53 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FaceWebMvc.RestClients;
+using FacesMvc.RestClients;
+using FacesMvc.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FaceWebMvc.Controllers
+namespace FacesMvc.Controllers
 {
+    [Route("OrderManagement")]
     public class OrderManagementController : Controller
     {
+        private readonly IOrderManagementApi _ordersApi;
 
-        private readonly IOrderManagementApi _orderManagementApi;
-
-        public OrderManagementController(IOrderManagementApi orderManagementApi)
+        public OrderManagementController(IOrderManagementApi ordersApi)
         {
-            _orderManagementApi = orderManagementApi;
+            _ordersApi = ordersApi;
         }
 
-
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var orders = await _orderManagementApi.GetOrders();
-            foreach(var order in orders)
+            var Orders = await _ordersApi.GetOrders();
+            var model = new OrderListViewModel
             {
-                order.ImageString = ConvertAndFormatToString(order.ImageData);
+                Orders = Orders
+
+            };
+
+            foreach (var m in model.Orders)
+            {
+                string imageBase64Data = Convert.ToBase64String(m.ImageData);
+                m.ImageString = string.Format("data:image/png;base64,{0}", imageBase64Data);
             }
-
-
-            return View(orders);
+            return View(model);
         }
-
 
         [Route("/Details/{orderId}")]
         public async Task<IActionResult> Details(string orderId)
         {
-            var order = await _orderManagementApi.GetOrderById(Guid.Parse(orderId));
-            order.ImageString = ConvertAndFormatToString(order.ImageData);
-
-            foreach(var detail in order.OrderDetails)
+            var order = await _ordersApi.GetOrderById(Guid.Parse(orderId));
+            order.ImageString = string.Format("data:image/png;base64,{0}",
+                Convert.ToBase64String(order.ImageData));
+            foreach (var detail in order.OrderDetails)
             {
-                detail.ImageString = ConvertAndFormatToString(detail.FaceData);
+                detail.ImageString = string.Format("data:image/png;base64,{0}",
+                Convert.ToBase64String(detail.FaceData));
             }
-
             return View(order);
         }
-        private string ConvertAndFormatToString(byte[] imageData)
-        {
-            string imageBase64Data = Convert.ToBase64String(imageData);
-            return string.Format("data:image/png;base64, {0}", imageBase64Data);
-        }
+
     }
 }

@@ -1,12 +1,12 @@
 ﻿
-using FaceWebMvc.ViewModels;
+using FacesMvc.ViewModels;
 using Refit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FaceWebMvc.RestClients
+namespace FacesMvc.RestClients
 {
     public interface IOrderManagementApi
     {

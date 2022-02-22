@@ -1,11 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp5.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>Microservices8.FacesApi</AssemblyName>
+    <RootNamespace>Microservices8.FacesApi</RootNamespace>
   </PropertyGroup>
+  
   <ItemGroup>
-    <PackageReference Include="OpenCvSharp4" Version="4.3.0.20200405" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.3.0.20200405" />
+    <PackageReference Include="OpenCvSharp4" Version="4.5.1.20210210" />
+    <PackageReference Include="OpenCvSharp4.Windows" Version="4.5.1.20210210" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Update="CascadeFile\haarcascade_frontalface_default.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

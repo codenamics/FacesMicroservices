@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
-namespace FaceWebMvc.ViewModels
+namespace FacesMvc.ViewModels
 {
     public class OrderDetailViewModel
     {
+        [Display(Name = "Order Detail Id:")]
         public int OrderDetailId { get; set; }
         public byte[] FaceData { get; set; }
         public string ImageString { get; set; }
-
     }
 }

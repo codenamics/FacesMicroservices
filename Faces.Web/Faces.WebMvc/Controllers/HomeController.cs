@@ -5,24 +5,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-
+using FacesMvc.Models;
 using MassTransit;
-using FaceWebMvc.ViewModels;
+using FacesMvc.ViewModels;
 using System.IO;
 using Messaging.InterfacesConstants.Constants;
 using Messaging.InterfacesConstants.Commands;
-using FaceWebMvc.Models;
 
-namespace FaceWebMvc.Controllers
+namespace FacesMvc.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IBusControl _busControl;
+        readonly IPublishEndpoint _publishEndpoint;
 
-        public HomeController(ILogger<HomeController> logger, IBusControl busControl)
+        
+        public HomeController(ILogger<HomeController> logger, IBusControl busControl,IPublishEndpoint publishEndpoint)
         {
-            _logger = logger;
+            _logger = logger; 
+            _publishEndpoint = publishEndpoint;
             _busControl = busControl;
         }
 
@@ -49,7 +51,7 @@ namespace FaceWebMvc.Controllers
             model.ImageData = memory.ToArray();
             model.PictureUrl = model.File.FileName;
             model.OrderId = Guid.NewGuid();
-             var sendToUri = new Uri($"{RabbitMqMassTransitConstants.RabbitMqUri }"+
+             var sendToUri = new Uri($"{RabbitMqMassTransitConstants.RabbitMqUri }/"+
                 
                  $"{RabbitMqMassTransitConstants.RegisterOrderCommandQueue}");
 

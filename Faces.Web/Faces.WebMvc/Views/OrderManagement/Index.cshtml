@@ -1,38 +1,39 @@
-﻿@model List<FaceWebMvc.ViewModels.OrderViewModel>
+﻿ @model FacesMvc.ViewModels.OrderListViewModel
 @{
 
-    ViewData["Title"] = "Orders List";
+
+    ViewData["Title"] = "Orders Overview";
 }
-<h3>Orders Management - overview</h3>
+<h3 id="PageTitle" > Orders management - overview</h3>
 <table class="table">
     <thead>
         <tr>
+
             <th>Order Id</th>
             <th>User Email</th>
             <th>Image</th>
             <th>Status</th>
         </tr>
+
     </thead>
     <tbody>
-        @foreach (var order in Model)
+        @foreach(var order in Model.Orders)
         {
-            <tr class="clickable" onclick="location.href='@(Url.Action("Details","OrderManagement",
-                                                          new { orderId =order.OrderId }))'">
-                <td>@order.OrderId</td>
-                <td>@order.UserEmail</td>
-                <td><img src="@order.ImageString" width="50px" height="50px" /></td>
-                <td>@order.OrderStatus</td>
-
-
-            </tr>
+        <tr class="clickable" onclick="location.href='@(Url.Action("Details", "OrderManagement", new {orderId =order.OrderId}))'">
+            <td>@order.OrderId</td>
+            <td>@order.UserEmail</td>
+            <td><img src="@order.ImageString" width="30px" height="30px" /></td>
+            <td>@order.Status</td>
+        </tr>
         }
+
     </tbody>
 
 
 </table>
- @section Scripts{ 
+@section Scripts{ 
      <script src="~/lib/signalr/dist/browser/signalr.js"></script>
-     <script type="text/javascript">
+      <script type="text/javascript">
 
          var timerId;
          const connection = new signalR.HubConnectionBuilder()
@@ -59,8 +60,5 @@
          };
 
          connection.start().catch(err => console.error(err.toString()));
-
      </script>
-
-
- }
+}
